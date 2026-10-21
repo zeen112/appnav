@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' as latlng;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -134,57 +134,55 @@ class ShareableImageService {
   }
 
   void _drawPolyline(Canvas canvas, Rect bounds, List<LatLng> points) {
-    if (points.length < 2) return;
+  if (points.length < 2) return;
 
-    double minLat = 90.0, maxLat = -90.0, minLng = 180.0, maxLng = -180.0;
-    for (final p in points) {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLng) minLng = p.longitude;
-      if (p.longitude > maxLng) maxLng = p.longitude;
-    }
-
-    final latRange = (maxLat - minLat).abs().clamp(0.001, 180.0);
-    final lngRange = (maxLng - minLng).abs().clamp(0.001, 360.0);
-
-    final path = Path();
-    final padding = 40.0;
-    final innerW = bounds.width - (padding * 2);
-    final innerH = bounds.height - (padding * 2);
-
-    for (int i = 0; i < points.length; i++) {
-      final p = points[i];
-      final normX = (p.longitude - minLng) / lngRange;
-      final normY = 1.0 - ((p.latitude - minLat) / latRange); // Invert Y
-
-      final px = bounds.left + padding + (normX * innerW);
-      final py = bounds.top + padding + (normY * innerH);
-
-      if (i == 0) {
-        path.moveTo(px, py);
-      } else {
-        path.lineTo(px, py);
-      }
-    }
-
-    // Glow effect
-    final glowPaint = Paint()
-      ..color = const Color(0xFF06B6D4).withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 14
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(path, glowPaint);
-
-    // Primary polyline
-    final linePaint = Paint()
-      ..color = const Color(0xFF38BDF8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(path, linePaint);
+  double minLat = 90.0, maxLat = -90.0, minLng = 180.0, maxLng = -180.0;
+  for (final p in points) {
+    if (p.latitude < minLat) minLat = p.latitude;
+    if (p.latitude > maxLat) maxLat = p.latitude;
+    if (p.longitude < minLng) minLng = p.longitude;
+    if (p.longitude > maxLng) maxLng = p.longitude;
   }
+
+  final latRange = (maxLat - minLat).abs().clamp(0.001, 180.0);
+  final lngRange = (maxLng - minLng).abs().clamp(0.001, 360.0);
+
+  final path = ui.Path();
+  final padding = 40.0;
+  final innerW = bounds.width - (padding * 2);
+  final innerH = bounds.height - (padding * 2);
+
+  for (int i = 0; i < points.length; i++) {
+    final p = points[i];
+    final normX = (p.longitude - minLng) / lngRange;
+    final normY = 1.0 - ((p.latitude - minLat) / latRange);
+
+    final px = bounds.left + padding + (normX * innerW);
+    final py = bounds.top + padding + (normY * innerH);
+
+    if (i == 0) {
+      path.moveTo(px, py);
+    } else {
+      path.lineTo(px, py);
+    }
+  }
+
+  final glowPaint = Paint()
+    ..color = const Color(0xFF06B6D4).withOpacity(0.4)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 14
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+  canvas.drawPath(path, glowPaint);
+
+  final linePaint = Paint()
+    ..color = const Color(0xFF38BDF8)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 6
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+  canvas.drawPath(path, linePaint);
+}
 
   void _drawText(Canvas canvas, String text, Offset offset, {
     required double fontSize,
